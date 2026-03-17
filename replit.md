@@ -29,10 +29,11 @@ workspace/
 │   ├── api-server/         # Express API (pipeline data + inference proxy)
 │   └── decot-dashboard/    # React monitoring dashboard (/)
 ├── lib/
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas
-│   └── db/                 # Drizzle ORM schema + DB connection
+│   ├── api-spec/                    # OpenAPI spec + Orval codegen config
+│   ├── api-client-react/            # Generated React Query hooks
+│   ├── api-zod/                     # Generated Zod schemas
+│   ├── db/                          # Drizzle ORM schema + DB connection
+│   └── integrations-openrouter-ai/  # OpenRouter AI integration client
 ├── pipeline/               # Python pipeline scripts (phases 0-6)
 │   ├── 00_setup.py         # Phase 0: Environment setup
 │   ├── 01_download.py      # Phase 1: Dataset download
@@ -54,6 +55,7 @@ Tables in PostgreSQL:
 - `cost_tracking` — OpenAI API token/cost tracking per phase
 - `evaluation_metrics` — benchmark accuracy scores
 - `training_curve` — loss curve data points
+- `conversations` — reasoning agent Q&A sessions (session, question, reasoning steps, answer)
 
 ## API Routes
 
@@ -65,6 +67,9 @@ Tables in PostgreSQL:
 - `GET /api/evaluation/training-curve` — loss curve
 - `POST /api/inference/query` — run inference question
 - `GET /api/inference/status` — inference service status
+- `POST /api/agent/ask` — CoT reasoning agent (auto-detects math/logic/commonsense/general)
+- `GET /api/agent/history` — conversation history (filterable by sessionId)
+- `DELETE /api/agent/history/:sessionId` — clear a session
 
 Internal endpoints (called by Python scripts):
 - `POST /api/pipeline/internal/phase-update`
@@ -92,10 +97,13 @@ python pipeline/06_deploy.py
 - `OPENAI_API_KEY` — for GPT-4 CoT generation (Phase 2)
 - `HF_TOKEN` — for Llama-2-7B download from HuggingFace
 
+## AI Integrations
+- `AI_INTEGRATIONS_OPENROUTER_BASE_URL` + `AI_INTEGRATIONS_OPENROUTER_API_KEY` — auto-provisioned Replit OpenRouter proxy (used by the Reasoning Agent)
+
 ## Dashboard Features
 1. **Overview** — phase cards, cost tracker, dataset counts
 2. **Pipeline Monitor** — detailed phase progress table with logs
 3. **Training Curves** — live Recharts loss plot (auto-refresh 30s)
 4. **Evaluation Results** — accuracy vs targets bar chart
-5. **Live Inference** — ask reasoning questions to the deployed model
+5. **Reasoning Agent** — full chat UI with CoT step-by-step reasoning (math/logic/commonsense/general), session history, confidence badges
 6. **Cost Tracker** — OpenAI spend breakdown by phase

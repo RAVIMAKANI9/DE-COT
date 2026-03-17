@@ -57,7 +57,7 @@
 }
 
 :root {
-  /* Force Dark Mode Palette */
+  /* Force Dark Mode Palette - Sleek ML Ops Theme */
   --background: 224 71% 4%; /* Slate 950 */
   --foreground: 213 31% 91%; /* Slate 200 */
   
@@ -112,13 +112,13 @@
     color-scheme: dark;
   }
   
-  /* Scrollbar styling for a sleek dashboard feel */
+  /* Sleek Scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: hsl(var(--background));
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--border));
@@ -131,17 +131,23 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-card/80 backdrop-blur-md border border-card-border shadow-xl;
+    @apply bg-card/60 backdrop-blur-xl border border-card-border shadow-2xl;
   }
   .text-glow {
-    text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+    text-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
   }
   .box-glow {
-    box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+  }
+  
+  .chat-bubble-user {
+    @apply bg-primary/20 border border-primary/30 text-primary-foreground shadow-[0_0_15px_rgba(6,182,212,0.1)];
+  }
+  .chat-bubble-agent {
+    @apply bg-secondary/80 border border-border/50 text-foreground shadow-lg backdrop-blur-md;
   }
 }
 
-/* Animations */
 @keyframes pulse-ring {
   0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
   70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(6, 182, 212, 0); }
@@ -149,23 +155,4 @@
 }
 .animate-pulse-ring {
   animation: pulse-ring 2s infinite;
-}
-
-@keyframes scanline {
-  0% { transform: translateY(-100%); opacity: 0; }
-  50% { opacity: 0.5; }
-  100% { transform: translateY(100%); opacity: 0; }
-}
-.terminal-scanline::after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  z-index: 2;
-  background-size: 100% 2px, 3px 100%;
-  pointer-events: none;
 }

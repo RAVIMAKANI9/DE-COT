@@ -107,7 +107,6 @@ export interface TrainingPoint {
 
 export interface InferenceRequest {
   question: string;
-  /** Hint for prompt formatting: gsm8k, commonsenseqa, aqua */
   benchmark?: string | null;
 }
 
@@ -126,6 +125,97 @@ export interface InferenceServiceStatus {
   readyForInference: boolean;
 }
 
+/**
+ * Reasoning mode — auto detects from question
+ */
+export type AgentRequestMode =
+  | (typeof AgentRequestMode)[keyof typeof AgentRequestMode]
+  | null;
+
+export const AgentRequestMode = {
+  auto: "auto",
+  math: "math",
+  commonsense: "commonsense",
+  logic: "logic",
+  general: "general",
+} as const;
+
+export interface AgentRequest {
+  question: string;
+  /** Optional session ID for conversation continuity */
+  sessionId?: string | null;
+  /** Reasoning mode — auto detects from question */
+  mode?: AgentRequestMode;
+}
+
+export type ReasoningStepType =
+  (typeof ReasoningStepType)[keyof typeof ReasoningStepType];
+
+export const ReasoningStepType = {
+  classify: "classify",
+  think: "think",
+  calculate: "calculate",
+  verify: "verify",
+  conclude: "conclude",
+} as const;
+
+export interface ReasoningStep {
+  stepNumber: number;
+  title: string;
+  content: string;
+  type: ReasoningStepType;
+}
+
+export type AgentResponseQuestionType =
+  (typeof AgentResponseQuestionType)[keyof typeof AgentResponseQuestionType];
+
+export const AgentResponseQuestionType = {
+  math: "math",
+  commonsense: "commonsense",
+  logic: "logic",
+  general: "general",
+} as const;
+
+export type AgentResponseConfidence =
+  (typeof AgentResponseConfidence)[keyof typeof AgentResponseConfidence];
+
+export const AgentResponseConfidence = {
+  high: "high",
+  medium: "medium",
+  low: "low",
+} as const;
+
+export interface AgentResponse {
+  sessionId: string;
+  question: string;
+  answer: string;
+  reasoning: ReasoningStep[];
+  questionType: AgentResponseQuestionType;
+  confidence: AgentResponseConfidence;
+  latencyMs: number;
+  model: string;
+  turnNumber: number;
+}
+
+export interface ConversationTurn {
+  id: number;
+  sessionId: string;
+  turnNumber: number;
+  question: string;
+  answer: string;
+  reasoning: ReasoningStep[];
+  questionType: string;
+  confidence: string;
+  latencyMs: number;
+  model: string;
+  createdAt: string;
+}
+
+export interface ClearHistoryResponse {
+  cleared: boolean;
+  sessionId: string;
+}
+
 export interface ErrorResponse {
   error: string;
   detail?: string | null;
@@ -133,5 +223,10 @@ export interface ErrorResponse {
 
 export type GetPipelineLogsParams = {
   phase?: string;
+  limit?: number;
+};
+
+export type GetAgentHistoryParams = {
+  sessionId?: string;
   limit?: number;
 };

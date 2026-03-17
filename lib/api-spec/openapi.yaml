@@ -15,13 +15,14 @@ tags:
     description: Evaluation metrics
   - name: inference
     description: Inference service
+  - name: agent
+    description: Reasoning agent
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -34,7 +35,6 @@ paths:
     get:
       operationId: getPipelineStatus
       tags: [pipeline]
-      summary: Get overall pipeline status
       responses:
         "200":
           description: Pipeline status
@@ -47,7 +47,6 @@ paths:
     get:
       operationId: getPipelinePhases
       tags: [pipeline]
-      summary: Get status of all pipeline phases
       responses:
         "200":
           description: List of phase statuses
@@ -62,7 +61,6 @@ paths:
     get:
       operationId: getPipelineLogs
       tags: [pipeline]
-      summary: Get recent pipeline logs
       parameters:
         - name: phase
           in: query
@@ -87,7 +85,6 @@ paths:
     get:
       operationId: getPipelineCost
       tags: [pipeline]
-      summary: Get OpenAI API cost tracking
       responses:
         "200":
           description: Cost summary
@@ -100,7 +97,6 @@ paths:
     get:
       operationId: getEvaluationMetrics
       tags: [evaluation]
-      summary: Get latest evaluation metrics per benchmark
       responses:
         "200":
           description: Evaluation metrics
@@ -115,7 +111,6 @@ paths:
     get:
       operationId: getTrainingCurve
       tags: [evaluation]
-      summary: Get training loss curve data points
       responses:
         "200":
           description: Training curve data
@@ -130,7 +125,6 @@ paths:
     post:
       operationId: inferenceQuery
       tags: [inference]
-      summary: Run inference on a reasoning question
       requestBody:
         required: true
         content:
@@ -144,18 +138,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/InferenceResponse"
-        "503":
-          description: Model not loaded
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
   /inference/status:
     get:
       operationId: getInferenceStatus
       tags: [inference]
-      summary: Get inference service status
       responses:
         "200":
           description: Inference service status
@@ -164,6 +151,70 @@ paths:
               schema:
                 $ref: "#/components/schemas/InferenceServiceStatus"
 
+  /agent/ask:
+    post:
+      operationId: agentAsk
+      tags: [agent]
+      summary: Ask the reasoning agent a question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentRequest"
+      responses:
+        "200":
+          description: Agent reasoning response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentResponse"
+
+  /agent/history:
+    get:
+      operationId: getAgentHistory
+      tags: [agent]
+      summary: Get recent conversation history
+      parameters:
+        - name: sessionId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Conversation history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConversationTurn"
+
+  /agent/history/{sessionId}:
+    delete:
+      operationId: clearAgentHistory
+      tags: [agent]
+      summary: Clear a conversation session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClearHistoryResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -171,8 +222,7 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
     PipelineStatus:
       type: object
@@ -194,9 +244,7 @@ components:
         filteredCoTSamples:
           type: integer
           nullable: true
-      required:
-        - currentPhase
-        - overallStatus
+      required: [currentPhase, overallStatus]
 
     PhaseStatus:
       type: object
@@ -226,11 +274,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-      required:
-        - phase
-        - name
-        - description
-        - status
+      required: [phase, name, description, status]
 
     LogEntry:
       type: object
@@ -251,11 +295,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-      required:
-        - id
-        - level
-        - message
-        - timestamp
+      required: [id, level, message, timestamp]
 
     CostSummary:
       type: object
@@ -275,12 +315,7 @@ components:
         estimatedRemainingUsd:
           type: number
           nullable: true
-      required:
-        - totalCostUsd
-        - totalInputTokens
-        - totalOutputTokens
-        - requestCount
-        - costByPhase
+      required: [totalCostUsd, totalInputTokens, totalOutputTokens, requestCount, costByPhase]
 
     PhaseCost:
       type: object
@@ -291,10 +326,7 @@ components:
           type: number
         requestCount:
           type: integer
-      required:
-        - phase
-        - costUsd
-        - requestCount
+      required: [phase, costUsd, requestCount]
 
     BenchmarkMetric:
       type: object
@@ -313,11 +345,7 @@ components:
         checkpointStep:
           type: integer
           nullable: true
-      required:
-        - benchmark
-        - accuracy
-        - targetAccuracy
-        - sampleCount
+      required: [benchmark, accuracy, targetAccuracy, sampleCount]
 
     TrainingPoint:
       type: object
@@ -332,9 +360,7 @@ components:
         timestamp:
           type: string
           nullable: true
-      required:
-        - step
-        - loss
+      required: [step, loss]
 
     InferenceRequest:
       type: object
@@ -344,9 +370,7 @@ components:
         benchmark:
           type: string
           nullable: true
-          description: "Hint for prompt formatting: gsm8k, commonsenseqa, aqua"
-      required:
-        - question
+      required: [question]
 
     InferenceResponse:
       type: object
@@ -359,11 +383,7 @@ components:
           type: boolean
         usedFallback:
           type: boolean
-      required:
-        - answer
-        - latencyMs
-        - modelLoaded
-        - usedFallback
+      required: [answer, latencyMs, modelLoaded, usedFallback]
 
     InferenceServiceStatus:
       type: object
@@ -381,9 +401,102 @@ components:
           nullable: true
         readyForInference:
           type: boolean
-      required:
-        - modelLoaded
-        - readyForInference
+      required: [modelLoaded, readyForInference]
+
+    AgentRequest:
+      type: object
+      properties:
+        question:
+          type: string
+        sessionId:
+          type: string
+          nullable: true
+          description: "Optional session ID for conversation continuity"
+        mode:
+          type: string
+          nullable: true
+          enum: [auto, math, commonsense, logic, general]
+          description: "Reasoning mode — auto detects from question"
+      required: [question]
+
+    ReasoningStep:
+      type: object
+      properties:
+        stepNumber:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+          enum: [classify, think, calculate, verify, conclude]
+      required: [stepNumber, title, content, type]
+
+    AgentResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        question:
+          type: string
+        answer:
+          type: string
+        reasoning:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReasoningStep"
+        questionType:
+          type: string
+          enum: [math, commonsense, logic, general]
+        confidence:
+          type: string
+          enum: [high, medium, low]
+        latencyMs:
+          type: number
+        model:
+          type: string
+        turnNumber:
+          type: integer
+      required: [sessionId, question, answer, reasoning, questionType, confidence, latencyMs, model, turnNumber]
+
+    ConversationTurn:
+      type: object
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: string
+        turnNumber:
+          type: integer
+        question:
+          type: string
+        answer:
+          type: string
+        reasoning:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReasoningStep"
+        questionType:
+          type: string
+        confidence:
+          type: string
+        latencyMs:
+          type: number
+        model:
+          type: string
+        createdAt:
+          type: string
+      required: [id, sessionId, turnNumber, question, answer, reasoning, questionType, confidence, latencyMs, model, createdAt]
+
+    ClearHistoryResponse:
+      type: object
+      properties:
+        cleared:
+          type: boolean
+        sessionId:
+          type: string
+      required: [cleared, sessionId]
 
     ErrorResponse:
       type: object
@@ -393,5 +506,4 @@ components:
         detail:
           type: string
           nullable: true
-      required:
-        - error
+      required: [error]

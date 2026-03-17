@@ -6,9 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./agentRequest";
+export * from "./agentRequestMode";
+export * from "./agentResponse";
+export * from "./agentResponseConfidence";
+export * from "./agentResponseQuestionType";
 export * from "./benchmarkMetric";
+export * from "./clearHistoryResponse";
+export * from "./conversationTurn";
 export * from "./costSummary";
 export * from "./errorResponse";
+export * from "./getAgentHistoryParams";
 export * from "./getPipelineLogsParams";
 export * from "./healthStatus";
 export * from "./inferenceRequest";
@@ -23,4 +31,6 @@ export * from "./phaseStatusMetadata";
 export * from "./phaseStatusStatus";
 export * from "./pipelineStatus";
 export * from "./pipelineStatusOverallStatus";
+export * from "./reasoningStep";
+export * from "./reasoningStepType";
 export * from "./trainingPoint";

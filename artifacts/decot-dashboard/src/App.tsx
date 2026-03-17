@@ -32,6 +32,7 @@ function Router() {
         <Route path="/training" component={TrainingCurves} />
         <Route path="/evaluation" component={EvaluationResults} />
         <Route path="/inference" component={LiveInference} />
+        <Route path="/agent" component={LiveInference} />
         <Route path="/cost" component={CostTracker} />
         <Route component={NotFound} />
       </Switch>

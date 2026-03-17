@@ -8,16 +8,12 @@
 import * as zod from "zod";
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
 
-/**
- * @summary Get overall pipeline status
- */
 export const GetPipelineStatusResponse = zod.object({
   currentPhase: zod.number(),
   overallStatus: zod.enum(["idle", "running", "paused", "completed", "failed"]),
@@ -27,9 +23,6 @@ export const GetPipelineStatusResponse = zod.object({
   filteredCoTSamples: zod.number().nullish(),
 });
 
-/**
- * @summary Get status of all pipeline phases
- */
 export const GetPipelinePhasesResponseItem = zod.object({
   phase: zod.number(),
   name: zod.string(),
@@ -45,9 +38,6 @@ export const GetPipelinePhasesResponse = zod.array(
   GetPipelinePhasesResponseItem,
 );
 
-/**
- * @summary Get recent pipeline logs
- */
 export const getPipelineLogsQueryLimitDefault = 100;
 
 export const GetPipelineLogsQueryParams = zod.object({
@@ -65,9 +55,6 @@ export const GetPipelineLogsResponseItem = zod.object({
 });
 export const GetPipelineLogsResponse = zod.array(GetPipelineLogsResponseItem);
 
-/**
- * @summary Get OpenAI API cost tracking
- */
 export const GetPipelineCostResponse = zod.object({
   totalCostUsd: zod.number(),
   totalInputTokens: zod.number(),
@@ -83,9 +70,6 @@ export const GetPipelineCostResponse = zod.object({
   estimatedRemainingUsd: zod.number().nullish(),
 });
 
-/**
- * @summary Get latest evaluation metrics per benchmark
- */
 export const GetEvaluationMetricsResponseItem = zod.object({
   benchmark: zod.string(),
   accuracy: zod.number(),
@@ -98,9 +82,6 @@ export const GetEvaluationMetricsResponse = zod.array(
   GetEvaluationMetricsResponseItem,
 );
 
-/**
- * @summary Get training loss curve data points
- */
 export const GetTrainingCurveResponseItem = zod.object({
   step: zod.number(),
   loss: zod.number(),
@@ -109,15 +90,9 @@ export const GetTrainingCurveResponseItem = zod.object({
 });
 export const GetTrainingCurveResponse = zod.array(GetTrainingCurveResponseItem);
 
-/**
- * @summary Run inference on a reasoning question
- */
 export const InferenceQueryBody = zod.object({
   question: zod.string(),
-  benchmark: zod
-    .string()
-    .nullish()
-    .describe("Hint for prompt formatting: gsm8k, commonsenseqa, aqua"),
+  benchmark: zod.string().nullish(),
 });
 
 export const InferenceQueryResponse = zod.object({
@@ -127,13 +102,88 @@ export const InferenceQueryResponse = zod.object({
   usedFallback: zod.boolean(),
 });
 
-/**
- * @summary Get inference service status
- */
 export const GetInferenceStatusResponse = zod.object({
   modelLoaded: zod.boolean(),
   adapterPath: zod.string().nullish(),
   baseModel: zod.string().nullish(),
   deviceMap: zod.string().nullish(),
   readyForInference: zod.boolean(),
+});
+
+/**
+ * @summary Ask the reasoning agent a question
+ */
+export const AgentAskBody = zod.object({
+  question: zod.string(),
+  sessionId: zod
+    .string()
+    .nullish()
+    .describe("Optional session ID for conversation continuity"),
+  mode: zod
+    .enum(["auto", "math", "commonsense", "logic", "general"])
+    .nullish()
+    .describe("Reasoning mode — auto detects from question"),
+});
+
+export const AgentAskResponse = zod.object({
+  sessionId: zod.string(),
+  question: zod.string(),
+  answer: zod.string(),
+  reasoning: zod.array(
+    zod.object({
+      stepNumber: zod.number(),
+      title: zod.string(),
+      content: zod.string(),
+      type: zod.enum(["classify", "think", "calculate", "verify", "conclude"]),
+    }),
+  ),
+  questionType: zod.enum(["math", "commonsense", "logic", "general"]),
+  confidence: zod.enum(["high", "medium", "low"]),
+  latencyMs: zod.number(),
+  model: zod.string(),
+  turnNumber: zod.number(),
+});
+
+/**
+ * @summary Get recent conversation history
+ */
+export const getAgentHistoryQueryLimitDefault = 50;
+
+export const GetAgentHistoryQueryParams = zod.object({
+  sessionId: zod.coerce.string().optional(),
+  limit: zod.coerce.number().default(getAgentHistoryQueryLimitDefault),
+});
+
+export const GetAgentHistoryResponseItem = zod.object({
+  id: zod.number(),
+  sessionId: zod.string(),
+  turnNumber: zod.number(),
+  question: zod.string(),
+  answer: zod.string(),
+  reasoning: zod.array(
+    zod.object({
+      stepNumber: zod.number(),
+      title: zod.string(),
+      content: zod.string(),
+      type: zod.enum(["classify", "think", "calculate", "verify", "conclude"]),
+    }),
+  ),
+  questionType: zod.string(),
+  confidence: zod.string(),
+  latencyMs: zod.number(),
+  model: zod.string(),
+  createdAt: zod.string(),
+});
+export const GetAgentHistoryResponse = zod.array(GetAgentHistoryResponseItem);
+
+/**
+ * @summary Clear a conversation session
+ */
+export const ClearAgentHistoryParams = zod.object({
+  sessionId: zod.coerce.string(),
+});
+
+export const ClearAgentHistoryResponse = zod.object({
+  cleared: zod.boolean(),
+  sessionId: zod.string(),
 });

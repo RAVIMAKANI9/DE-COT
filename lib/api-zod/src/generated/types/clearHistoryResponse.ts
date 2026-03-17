@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface InferenceRequest {
-  question: string;
-  benchmark?: string | null;
+export interface ClearHistoryResponse {
+  cleared: boolean;
+  sessionId: string;
 }

@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter"
 import { 
   Activity, 
   BarChart2, 
+  Bot, 
   Cpu, 
   DollarSign, 
   LayoutDashboard, 
@@ -14,7 +15,7 @@ const navigation = [
   { name: 'Pipeline Monitor', href: '/pipeline', icon: Activity },
   { name: 'Training Curves', href: '/training', icon: LineChart },
   { name: 'Evaluation', href: '/evaluation', icon: BarChart2 },
-  { name: 'Inference', href: '/inference', icon: Cpu },
+  { name: 'Reasoning Agent', href: '/agent', icon: Bot },
   { name: 'Cost Tracker', href: '/cost', icon: DollarSign },
 ]
 
@@ -34,7 +35,7 @@ export function Sidebar() {
       <div className="flex flex-1 flex-col overflow-y-auto pt-6 px-3">
         <nav className="flex-1 space-y-1">
           {navigation.map((item) => {
-            const isActive = location === item.href
+            const isActive = location === item.href || (item.href === '/agent' && location === '/inference')
             return (
               <Link
                 key={item.name}

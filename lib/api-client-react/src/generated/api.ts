@@ -17,9 +17,13 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AgentRequest,
+  AgentResponse,
   BenchmarkMetric,
+  ClearHistoryResponse,
+  ConversationTurn,
   CostSummary,
-  ErrorResponse,
+  GetAgentHistoryParams,
   GetPipelineLogsParams,
   HealthStatus,
   InferenceRequest,
@@ -41,7 +45,6 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const getHealthCheckUrl = () => {
@@ -116,9 +119,6 @@ export function useHealthCheck<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-/**
- * @summary Get overall pipeline status
- */
 export const getGetPipelineStatusUrl = () => {
   return `/api/pipeline/status`;
 };
@@ -167,10 +167,6 @@ export type GetPipelineStatusQueryResult = NonNullable<
 >;
 export type GetPipelineStatusQueryError = ErrorType<unknown>;
 
-/**
- * @summary Get overall pipeline status
- */
-
 export function useGetPipelineStatus<
   TData = Awaited<ReturnType<typeof getPipelineStatus>>,
   TError = ErrorType<unknown>,
@@ -191,9 +187,6 @@ export function useGetPipelineStatus<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-/**
- * @summary Get status of all pipeline phases
- */
 export const getGetPipelinePhasesUrl = () => {
   return `/api/pipeline/phases`;
 };
@@ -242,10 +235,6 @@ export type GetPipelinePhasesQueryResult = NonNullable<
 >;
 export type GetPipelinePhasesQueryError = ErrorType<unknown>;
 
-/**
- * @summary Get status of all pipeline phases
- */
-
 export function useGetPipelinePhases<
   TData = Awaited<ReturnType<typeof getPipelinePhases>>,
   TError = ErrorType<unknown>,
@@ -266,9 +255,6 @@ export function useGetPipelinePhases<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-/**
- * @summary Get recent pipeline logs
- */
 export const getGetPipelineLogsUrl = (params?: GetPipelineLogsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -333,10 +319,6 @@ export type GetPipelineLogsQueryResult = NonNullable<
 >;
 export type GetPipelineLogsQueryError = ErrorType<unknown>;
 
-/**
- * @summary Get recent pipeline logs
- */
-
 export function useGetPipelineLogs<
   TData = Awaited<ReturnType<typeof getPipelineLogs>>,
   TError = ErrorType<unknown>,
@@ -360,9 +342,6 @@ export function useGetPipelineLogs<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-/**
- * @summary Get OpenAI API cost tracking
- */
 export const getGetPipelineCostUrl = () => {
   return `/api/pipeline/cost`;
 };
@@ -411,10 +390,6 @@ export type GetPipelineCostQueryResult = NonNullable<
 >;
 export type GetPipelineCostQueryError = ErrorType<unknown>;
 
-/**
- * @summary Get OpenAI API cost tracking
- */
-
 export function useGetPipelineCost<
   TData = Awaited<ReturnType<typeof getPipelineCost>>,
   TError = ErrorType<unknown>,
@@ -435,9 +410,6 @@ export function useGetPipelineCost<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-/**
- * @summary Get latest evaluation metrics per benchmark
- */
 export const getGetEvaluationMetricsUrl = () => {
   return `/api/evaluation/metrics`;
 };
@@ -486,10 +458,6 @@ export type GetEvaluationMetricsQueryResult = NonNullable<
 >;
 export type GetEvaluationMetricsQueryError = ErrorType<unknown>;
 
-/**
- * @summary Get latest evaluation metrics per benchmark
- */
-
 export function useGetEvaluationMetrics<
   TData = Awaited<ReturnType<typeof getEvaluationMetrics>>,
   TError = ErrorType<unknown>,
@@ -510,9 +478,6 @@ export function useGetEvaluationMetrics<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-/**
- * @summary Get training loss curve data points
- */
 export const getGetTrainingCurveUrl = () => {
   return `/api/evaluation/training-curve`;
 };
@@ -561,10 +526,6 @@ export type GetTrainingCurveQueryResult = NonNullable<
 >;
 export type GetTrainingCurveQueryError = ErrorType<unknown>;
 
-/**
- * @summary Get training loss curve data points
- */
-
 export function useGetTrainingCurve<
   TData = Awaited<ReturnType<typeof getTrainingCurve>>,
   TError = ErrorType<unknown>,
@@ -585,9 +546,6 @@ export function useGetTrainingCurve<
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
-/**
- * @summary Run inference on a reasoning question
- */
 export const getInferenceQueryUrl = () => {
   return `/api/inference/query`;
 };
@@ -605,7 +563,7 @@ export const inferenceQuery = async (
 };
 
 export const getInferenceQueryMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -646,13 +604,10 @@ export type InferenceQueryMutationResult = NonNullable<
   Awaited<ReturnType<typeof inferenceQuery>>
 >;
 export type InferenceQueryMutationBody = BodyType<InferenceRequest>;
-export type InferenceQueryMutationError = ErrorType<ErrorResponse>;
+export type InferenceQueryMutationError = ErrorType<unknown>;
 
-/**
- * @summary Run inference on a reasoning question
- */
 export const useInferenceQuery = <
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -671,9 +626,6 @@ export const useInferenceQuery = <
   return useMutation(getInferenceQueryMutationOptions(options));
 };
 
-/**
- * @summary Get inference service status
- */
 export const getGetInferenceStatusUrl = () => {
   return `/api/inference/status`;
 };
@@ -722,10 +674,6 @@ export type GetInferenceStatusQueryResult = NonNullable<
 >;
 export type GetInferenceStatusQueryError = ErrorType<unknown>;
 
-/**
- * @summary Get inference service status
- */
-
 export function useGetInferenceStatus<
   TData = Awaited<ReturnType<typeof getInferenceStatus>>,
   TError = ErrorType<unknown>,
@@ -745,3 +693,267 @@ export function useGetInferenceStatus<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Ask the reasoning agent a question
+ */
+export const getAgentAskUrl = () => {
+  return `/api/agent/ask`;
+};
+
+export const agentAsk = async (
+  agentRequest: AgentRequest,
+  options?: RequestInit,
+): Promise<AgentResponse> => {
+  return customFetch<AgentResponse>(getAgentAskUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(agentRequest),
+  });
+};
+
+export const getAgentAskMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof agentAsk>>,
+    TError,
+    { data: BodyType<AgentRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof agentAsk>>,
+  TError,
+  { data: BodyType<AgentRequest> },
+  TContext
+> => {
+  const mutationKey = ["agentAsk"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof agentAsk>>,
+    { data: BodyType<AgentRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return agentAsk(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AgentAskMutationResult = NonNullable<
+  Awaited<ReturnType<typeof agentAsk>>
+>;
+export type AgentAskMutationBody = BodyType<AgentRequest>;
+export type AgentAskMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Ask the reasoning agent a question
+ */
+export const useAgentAsk = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof agentAsk>>,
+    TError,
+    { data: BodyType<AgentRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof agentAsk>>,
+  TError,
+  { data: BodyType<AgentRequest> },
+  TContext
+> => {
+  return useMutation(getAgentAskMutationOptions(options));
+};
+
+/**
+ * @summary Get recent conversation history
+ */
+export const getGetAgentHistoryUrl = (params?: GetAgentHistoryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/agent/history?${stringifiedParams}`
+    : `/api/agent/history`;
+};
+
+export const getAgentHistory = async (
+  params?: GetAgentHistoryParams,
+  options?: RequestInit,
+): Promise<ConversationTurn[]> => {
+  return customFetch<ConversationTurn[]>(getGetAgentHistoryUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAgentHistoryQueryKey = (params?: GetAgentHistoryParams) => {
+  return [`/api/agent/history`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetAgentHistoryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAgentHistory>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetAgentHistoryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAgentHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAgentHistoryQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAgentHistory>>> = ({
+    signal,
+  }) => getAgentHistory(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAgentHistory>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAgentHistoryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAgentHistory>>
+>;
+export type GetAgentHistoryQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get recent conversation history
+ */
+
+export function useGetAgentHistory<
+  TData = Awaited<ReturnType<typeof getAgentHistory>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetAgentHistoryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAgentHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAgentHistoryQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Clear a conversation session
+ */
+export const getClearAgentHistoryUrl = (sessionId: string) => {
+  return `/api/agent/history/${sessionId}`;
+};
+
+export const clearAgentHistory = async (
+  sessionId: string,
+  options?: RequestInit,
+): Promise<ClearHistoryResponse> => {
+  return customFetch<ClearHistoryResponse>(getClearAgentHistoryUrl(sessionId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getClearAgentHistoryMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearAgentHistory>>,
+    TError,
+    { sessionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof clearAgentHistory>>,
+  TError,
+  { sessionId: string },
+  TContext
+> => {
+  const mutationKey = ["clearAgentHistory"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof clearAgentHistory>>,
+    { sessionId: string }
+  > = (props) => {
+    const { sessionId } = props ?? {};
+
+    return clearAgentHistory(sessionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ClearAgentHistoryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof clearAgentHistory>>
+>;
+
+export type ClearAgentHistoryMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Clear a conversation session
+ */
+export const useClearAgentHistory = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearAgentHistory>>,
+    TError,
+    { sessionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof clearAgentHistory>>,
+  TError,
+  { sessionId: string },
+  TContext
+> => {
+  return useMutation(getClearAgentHistoryMutationOptions(options));
+};
