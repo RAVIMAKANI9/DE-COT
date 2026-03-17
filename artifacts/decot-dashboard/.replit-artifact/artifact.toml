@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "DE-COT Pipeline Dashboard"
+version = "1.0.0"
+id = "artifacts/decot-dashboard"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 18627
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/decot-dashboard run dev"
+
+[services.env]
+PORT = "18627"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/decot-dashboard", "run", "build"]
+publicDir = "artifacts/decot-dashboard/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

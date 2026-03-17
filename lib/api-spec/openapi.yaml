@@ -1,15 +1,20 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: DE-COT Pipeline Dashboard API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: pipeline
+    description: Pipeline status and control
+  - name: evaluation
+    description: Evaluation metrics
+  - name: inference
+    description: Inference service
 paths:
   /healthz:
     get:
@@ -24,6 +29,141 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /pipeline/status:
+    get:
+      operationId: getPipelineStatus
+      tags: [pipeline]
+      summary: Get overall pipeline status
+      responses:
+        "200":
+          description: Pipeline status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineStatus"
+
+  /pipeline/phases:
+    get:
+      operationId: getPipelinePhases
+      tags: [pipeline]
+      summary: Get status of all pipeline phases
+      responses:
+        "200":
+          description: List of phase statuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PhaseStatus"
+
+  /pipeline/logs:
+    get:
+      operationId: getPipelineLogs
+      tags: [pipeline]
+      summary: Get recent pipeline logs
+      parameters:
+        - name: phase
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: Log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LogEntry"
+
+  /pipeline/cost:
+    get:
+      operationId: getPipelineCost
+      tags: [pipeline]
+      summary: Get OpenAI API cost tracking
+      responses:
+        "200":
+          description: Cost summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CostSummary"
+
+  /evaluation/metrics:
+    get:
+      operationId: getEvaluationMetrics
+      tags: [evaluation]
+      summary: Get latest evaluation metrics per benchmark
+      responses:
+        "200":
+          description: Evaluation metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BenchmarkMetric"
+
+  /evaluation/training-curve:
+    get:
+      operationId: getTrainingCurve
+      tags: [evaluation]
+      summary: Get training loss curve data points
+      responses:
+        "200":
+          description: Training curve data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrainingPoint"
+
+  /inference/query:
+    post:
+      operationId: inferenceQuery
+      tags: [inference]
+      summary: Run inference on a reasoning question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InferenceRequest"
+      responses:
+        "200":
+          description: Inference result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InferenceResponse"
+        "503":
+          description: Model not loaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /inference/status:
+    get:
+      operationId: getInferenceStatus
+      tags: [inference]
+      summary: Get inference service status
+      responses:
+        "200":
+          description: Inference service status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InferenceServiceStatus"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +174,224 @@ components:
       required:
         - status
 
+    PipelineStatus:
+      type: object
+      properties:
+        currentPhase:
+          type: integer
+        overallStatus:
+          type: string
+          enum: [idle, running, paused, completed, failed]
+        startedAt:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          nullable: true
+        totalDatasetSamples:
+          type: integer
+          nullable: true
+        filteredCoTSamples:
+          type: integer
+          nullable: true
+      required:
+        - currentPhase
+        - overallStatus
+
+    PhaseStatus:
+      type: object
+      properties:
+        phase:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed, skipped]
+        startedAt:
+          type: string
+          nullable: true
+        completedAt:
+          type: string
+          nullable: true
+        progress:
+          type: number
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+      required:
+        - phase
+        - name
+        - description
+        - status
+
+    LogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        phase:
+          type: integer
+          nullable: true
+        level:
+          type: string
+          enum: [info, warning, error, debug]
+        message:
+          type: string
+        timestamp:
+          type: string
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+      required:
+        - id
+        - level
+        - message
+        - timestamp
+
+    CostSummary:
+      type: object
+      properties:
+        totalCostUsd:
+          type: number
+        totalInputTokens:
+          type: integer
+        totalOutputTokens:
+          type: integer
+        requestCount:
+          type: integer
+        costByPhase:
+          type: array
+          items:
+            $ref: "#/components/schemas/PhaseCost"
+        estimatedRemainingUsd:
+          type: number
+          nullable: true
+      required:
+        - totalCostUsd
+        - totalInputTokens
+        - totalOutputTokens
+        - requestCount
+        - costByPhase
+
+    PhaseCost:
+      type: object
+      properties:
+        phase:
+          type: integer
+        costUsd:
+          type: number
+        requestCount:
+          type: integer
+      required:
+        - phase
+        - costUsd
+        - requestCount
+
+    BenchmarkMetric:
+      type: object
+      properties:
+        benchmark:
+          type: string
+        accuracy:
+          type: number
+        targetAccuracy:
+          type: number
+        sampleCount:
+          type: integer
+        evaluatedAt:
+          type: string
+          nullable: true
+        checkpointStep:
+          type: integer
+          nullable: true
+      required:
+        - benchmark
+        - accuracy
+        - targetAccuracy
+        - sampleCount
+
+    TrainingPoint:
+      type: object
+      properties:
+        step:
+          type: integer
+        loss:
+          type: number
+        learningRate:
+          type: number
+          nullable: true
+        timestamp:
+          type: string
+          nullable: true
+      required:
+        - step
+        - loss
+
+    InferenceRequest:
+      type: object
+      properties:
+        question:
+          type: string
+        benchmark:
+          type: string
+          nullable: true
+          description: "Hint for prompt formatting: gsm8k, commonsenseqa, aqua"
+      required:
+        - question
+
+    InferenceResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+        latencyMs:
+          type: number
+        modelLoaded:
+          type: boolean
+        usedFallback:
+          type: boolean
+      required:
+        - answer
+        - latencyMs
+        - modelLoaded
+        - usedFallback
+
+    InferenceServiceStatus:
+      type: object
+      properties:
+        modelLoaded:
+          type: boolean
+        adapterPath:
+          type: string
+          nullable: true
+        baseModel:
+          type: string
+          nullable: true
+        deviceMap:
+          type: string
+          nullable: true
+        readyForInference:
+          type: boolean
+      required:
+        - modelLoaded
+        - readyForInference
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        detail:
+          type: string
+          nullable: true
+      required:
+        - error

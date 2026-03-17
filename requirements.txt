@@ -1,0 +1,35 @@
+# DE-COT Pipeline — Python Dependencies
+# Install with: pip install -r requirements.txt
+# For ML packages, GPU support is recommended (CUDA 11.8+)
+
+# ─── Core / Data ─────────────────────────────────────────────
+datasets>=2.18.0
+pandas>=2.0.0
+pyarrow>=14.0.0
+numpy>=1.24.0
+tqdm>=4.65.0
+requests>=2.31.0
+psycopg2-binary>=2.9.0
+
+# ─── OpenAI ──────────────────────────────────────────────────
+openai>=1.12.0
+tiktoken>=0.6.0
+
+# ─── ML / Transformers ───────────────────────────────────────
+torch>=2.1.0
+transformers>=4.40.0
+peft>=0.10.0
+trl>=0.8.6
+accelerate>=0.30.0
+bitsandbytes>=0.43.0
+scipy>=1.11.0
+einops>=0.7.0
+sentencepiece>=0.1.99
+
+# ─── Inference API ───────────────────────────────────────────
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.0.0
+
+# ─── Optional: Experiment Tracking ──────────────────────────
+# wandb>=0.16.0   # Uncomment for W&B logging

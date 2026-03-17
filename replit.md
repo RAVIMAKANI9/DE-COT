@@ -1,8 +1,11 @@
-# Workspace
+# DE-COT Reasoning Agent
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+End-to-end Data-Efficient Chain-of-Thought (DE-COT) distillation pipeline + monitoring dashboard.
+
+**Pipeline**: GPT-4 CoT generation → filtering → Llama-2-7B LoRA fine-tuning → implicit reasoning inference  
+**Targets**: GSM8K ≥94% | CommonsenseQA ≥93% | AQuA-RAT ≥92%
 
 ## Stack
 
@@ -14,83 +17,85 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Frontend**: React + Vite + Recharts + shadcn/ui
+- **Python Pipeline**: PyTorch + Transformers + PEFT + TRL + bitsandbytes
+- **Inference**: FastAPI + Uvicorn
 
 ## Structure
 
 ```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+workspace/
+├── artifacts/
+│   ├── api-server/         # Express API (pipeline data + inference proxy)
+│   └── decot-dashboard/    # React monitoring dashboard (/)
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
+│   ├── api-zod/            # Generated Zod schemas
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── pipeline/               # Python pipeline scripts (phases 0-6)
+│   ├── 00_setup.py         # Phase 0: Environment setup
+│   ├── 01_download.py      # Phase 1: Dataset download
+│   ├── 02_generate_cot.py  # Phase 2: GPT-4 CoT generation
+│   ├── 03_filter_cot.py    # Phase 3: Quality filtering
+│   ├── 04_finetune.py      # Phase 4: LoRA/QLoRA fine-tuning
+│   ├── 05_evaluate.py      # Phase 5: Evaluation
+│   └── 06_deploy.py        # Phase 6: FastAPI inference server
+├── requirements.txt         # Python dependencies
+└── README.md               # Full pipeline instructions
 ```
 
-## TypeScript & Composite Projects
+## DB Schema
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+Tables in PostgreSQL:
+- `pipeline_status` — overall pipeline state
+- `phase_status` — per-phase status (0-6), progress, timestamps
+- `pipeline_logs` — timestamped log messages per phase
+- `cost_tracking` — OpenAI API token/cost tracking per phase
+- `evaluation_metrics` — benchmark accuracy scores
+- `training_curve` — loss curve data points
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## API Routes
 
-## Root Scripts
+- `GET /api/pipeline/status` — overall status
+- `GET /api/pipeline/phases` — all phase statuses
+- `GET /api/pipeline/logs` — log entries (filterable by phase)
+- `GET /api/pipeline/cost` — cost summary
+- `GET /api/evaluation/metrics` — benchmark results
+- `GET /api/evaluation/training-curve` — loss curve
+- `POST /api/inference/query` — run inference question
+- `GET /api/inference/status` — inference service status
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+Internal endpoints (called by Python scripts):
+- `POST /api/pipeline/internal/phase-update`
+- `POST /api/pipeline/internal/cost-update`
+- `POST /api/pipeline/internal/training-step`
+- `POST /api/pipeline/internal/eval-metric`
 
-## Packages
+## Running the Pipeline
 
-### `artifacts/api-server` (`@workspace/api-server`)
+```bash
+# Install Python deps
+pip install -r requirements.txt
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+# Run phases in order (each is resumable)
+python pipeline/00_setup.py
+python pipeline/01_download.py
+python pipeline/02_generate_cot.py --model gpt-4o-mini
+python pipeline/03_filter_cot.py
+python pipeline/04_finetune.py --model meta-llama/Llama-2-7b-hf --epochs 3
+python pipeline/05_evaluate.py
+python pipeline/06_deploy.py
+```
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+## Secrets Required
+- `OPENAI_API_KEY` — for GPT-4 CoT generation (Phase 2)
+- `HF_TOKEN` — for Llama-2-7B download from HuggingFace
 
-### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+## Dashboard Features
+1. **Overview** — phase cards, cost tracker, dataset counts
+2. **Pipeline Monitor** — detailed phase progress table with logs
+3. **Training Curves** — live Recharts loss plot (auto-refresh 30s)
+4. **Evaluation Results** — accuracy vs targets bar chart
+5. **Live Inference** — ask reasoning questions to the deployed model
+6. **Cost Tracker** — OpenAI spend breakdown by phase

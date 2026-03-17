@@ -1,0 +1,21 @@
+packages:
+  "recharts": "Data visualization for training curves and evaluation metrics"
+  "date-fns": "Formatting timestamps for logs and phases"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility for merging tailwind classes safely"
+  "@radix-ui/react-slot": "For reusable component composition"
+  "@radix-ui/react-tooltip": "For robust tooltips on dashboard items"
+  "@radix-ui/react-dialog": "For modals and dialogs if needed"
+  "@radix-ui/react-progress": "For accessible progress bars"
+  "@radix-ui/react-scroll-area": "For log terminal scrolling"
+  "@radix-ui/react-select": "For dropdown selections in inference"
+
+images:
+  - path: "artifacts/decot-dashboard/public/images/decot-logo.png"
+    description: "A minimalist, dark-mode abstract geometric logo representing a neural network or AI pipeline. Deep blues, cyans, and purples on a transparent background."
+    aspect_ratio: "1:1"
+
+notes:
+  - Hooks are imported from @workspace/api-client-react
+  - Dashboard is strictly dark mode optimized for data density
+  - TanStack Query hooks use refetchInterval for live polling
