@@ -1,0 +1,206 @@
+Product Requirements Document (PRD)
+Project: DE-COT Reasoning Agent – Data-Efficient CoT Distillation Pipeline
+Target Platform: Replit (full end-to-end implementation)
+Version: 1.0 – Production-ready specification for Replit execution
+Date: March 2026
+Objective: Build the complete DE-COT system described in the paper using only Replit (no external servers, no local machines during development)
+1. Project Goal
+Implement an end-to-end reasoning distillation pipeline on Replit that achieves the core results reported in the paper:
+
+Teacher: GPT-4 (via OpenAI API)
+Student: Llama-2-7B
+Technique: CoT generation → filtering → LoRA fine-tuning → implicit reasoning at inference
+Target benchmarks: GSM8K ≥94%, CommonsenseQA ≥93%, AQuA ≥92%, overall reasoning accuracy ~96–97%
+Inference style: no explicit CoT at runtime (internalized during training)
+Latency goal: ~0.6–0.9 s per reasoning question on Replit GPU
+
+2. High-Level Pipeline (must exist as separate runnable scripts)
+textphase 0    →  environment + dependencies + secrets
+phase 1    →  download & standardize datasets
+phase 2    →  generate CoT trajectories with GPT-4
+phase 3    →  validate, filter & build high-quality CoT training set
+phase 4    →  LoRA / QLoRA fine-tuning of Llama-2-7B
+phase 5    →  evaluation & metric collection (paper-style tables)
+phase 6    →  merge & deploy as FastAPI inference service
+3. Mandatory Deliverables inside one Replit project
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+File / FolderPurposeMust contain / achieverequirements.txtpinned dependenciestransformers, peft, trl, accelerate, bitsandbytes, openai, fastapi, uvicorn, datasets, wandb (optional).env / Replit SecretsAPI keysOPENAI_API_KEY, HF_TOKEN (optional for push)01_download.pyFetch GSM8K, CommonsenseQA, AQuA-rat, optionally ASDiv/MAWPSsave as parquet or jsonl02_generate_cot.pyCall GPT-4 to produce structured reasoning tracesresumable, cost tracking, batching, few-shot CoT prompt03_filter_cot.pyConsistency check + quality filter + deduplicationproduce final ~10–30k high-quality (question, CoT, answer) examples04_train_lora.pyPEFT/LoRA or QLoRA training using trl SFTTrainercheckpoint saving, W&B logging (optional), early stopping05_evaluate.pyRun evaluation on test sets → reproduce paper metricsExact Match, Accuracy, F1, optional BLEU/ROUGE/BERTScore06_inference_api.pyFastAPI service – single /predict endpointinput: question → output: final answer (no CoT shown)utils/prompts.pyCentral location for all prompt templatesteacher CoT prompt, system message, few-shot examplesutils/metrics.pyExact Match, F1, majority vote accuracy, etc.match paper evaluation stylecheckpoints/training artifacts (gitignore large files or use HF push)adapter_model, tokenizer, configdata/raw + processed datasetsgitignore large filesREADME.mdHow to run each phase + expected costs + hardware notesmust warn about OpenAI & Replit GPU costs
+4. Non-functional & Replit-specific Constraints
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AspectRequirement / RecommendationGPU usageMust support Replit Boosted / Hacker / Teams GPU (~A100 or L40S equivalent when available)VRAM optimizationPrefer QLoRA (4-bit base + LoRA) when training on ≤24 GB VRAMTraining time target≤ 12–30 hours for full run (realistic on Replit)OpenAI cost target≤ $80–150 total (use gpt-4o-mini or gpt-4-turbo-2024-04-09 where acceptable)Disk spaceKeep raw datasets < 2 GB, CoT jsonl < 500 MBResumabilityEvery long-running script must support --resume or checkpoint filesReproducibilityFixed seed (42), pinned package versions, documented random statesMonitoringBasic print + optional wandb or simple csv logger
+5. Phase Dependencies & Execution Order
+textPhase 0  → always first
+Phase 1  → Phase 0
+Phase 2  → Phase 1
+Phase 3  → Phase 2
+Phase 4  → Phase 3
+Phase 5  → Phase 4 (or use published checkpoint)
+Phase 6  → Phase 4
+6. Acceptance Criteria (what “done” looks like)
+
+All six main scripts can be executed independently with appropriate arguments/flags.
+Running the full pipeline (01→06) produces:
+a LoRA/QLoRA adapter that loads successfully with peft
+evaluation numbers within ~1–3% of paper reported values on at least GSM8K & AQuA
+
+FastAPI server starts on Replit and correctly answers 5–10 sample reasoning questions with < 2 s latency (cold start acceptable)
+Total OpenAI spend is logged and visible in the final report
+README contains clear instructions how to:
+install dependencies
+set secrets
+run each phase
+resume interrupted training
+deploy the API persistently
+
+
+7. Success / Failure Signals
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GoalGreen (success)Red (failure / high risk)GSM8K accuracy≥ 92%< 88%Inference speed (per question)0.5–1.2 seconds> 3 seconds on same hardwareOpenAI cost for CoT generation<$120>$250Training stabilityLoss decreases steadily, no OOM after 2 hFrequent crashes / stuck after 4+ hoursReplit deploymentAPI responds to external curl requestsOnly works inside Replit shell
