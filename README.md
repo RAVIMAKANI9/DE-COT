@@ -207,19 +207,7 @@ Final latency: **~0.7 seconds**
 * **ML:** PyTorch, Transformers, LoRA
 * **Models:** GPT-based teacher, LLaMA-2 student
 
----
 
-## 📖 Citation
-
-```bibtex
-@article{decot2026,
-  title={Enhancing Reasoning in Small Language Models through Data Efficient Chain of Thought Distillation},
-  author={Reddy, Veerababu and Katta, Kiran and Makani, Ravi and Mattaparti, Lavanya and Kurra, Srikanth},
-  year={2026}
-}
-```
-
----
 
 ## 📄 License
 
