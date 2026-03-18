@@ -1,0 +1,289 @@
+🧠 Product: DE-COT Reasoning Engine (v1.0)
+1. 🎯 OBJECTIVE
+
+Develop a production-ready reasoning system that transfers structured reasoning from a large teacher model to a compact student model and enables low-latency, cost-efficient inference without relying on external APIs.
+
+2. 🧩 PRODUCT SCOPE
+
+The system will:
+
+Generate Chain-of-Thought (CoT) data using a teacher model
+
+Construct a high-quality reasoning dataset
+
+Train a LLaMA-based student model using LoRA
+
+Serve real-time inference via API
+
+Provide evaluation metrics and monitoring dashboard
+
+3. 🧠 CORE ARCHITECTURE
+Datasets → CoT Generation (Teacher Model) → Filtering → Training Dataset
+        → LoRA Fine-Tuning (Student Model)
+        → Inference API → User Response
+4. 📊 DATASETS
+Mandatory Datasets
+4.1 GSM8K
+
+Type: Arithmetic reasoning
+
+Use: Numerical multi-step problem solving
+
+4.2 CommonsenseQA
+
+Type: Commonsense reasoning
+
+Use: Logical and contextual inference
+
+4.3 AQuA-RAT
+
+Type: Algebra reasoning
+
+Use: Symbolic and mathematical reasoning
+
+Dataset Format
+{
+  "instruction": "Solve step by step",
+  "input": "question",
+  "output": "chain-of-thought reasoning + final answer"
+}
+5. 🧱 SYSTEM MODULES
+5.1 Dataset Generation Module
+
+Input: Raw datasets
+Process: Generate CoT using teacher model
+Output: Structured reasoning dataset
+
+Requirements:
+
+Batch processing
+
+Retry mechanism
+
+Logging
+
+5.2 Filtering Module
+
+Purpose: Improve dataset quality
+
+Functions:
+
+Remove incorrect outputs
+
+Remove duplicate samples
+
+Eliminate inconsistent reasoning
+
+Validate answer correctness
+
+5.3 Training Module
+
+Model: LLaMA-2-7B
+
+Method:
+
+LoRA / QLoRA fine-tuning
+
+Configuration:
+
+Parameter	Value
+Epochs	3–5
+Batch Size	4–8
+Learning Rate	2e-5
+LoRA Rank	8–16
+
+Objective:
+
+Loss = Answer Loss + λ × CoT Alignment Loss
+5.4 Inference Module
+
+Flow:
+
+User Query → Fine-tuned Model → Answer
+
+Requirements:
+
+No dependency on teacher model
+
+Low latency (<1 second)
+
+GPU-optimized inference
+
+5.5 Metrics Module
+Accuracy Metrics:
+
+Exact Match (EM)
+
+F1 Score
+
+Accuracy
+
+nDCG
+
+Language Metrics:
+
+BLEU
+
+ROUGE-L
+
+METEOR
+
+BERTScore
+
+Performance Metrics:
+
+Inference latency
+
+Throughput
+
+Memory usage
+
+5.6 API Module
+Endpoint: /predict
+
+Request:
+
+{
+  "query": "input question"
+}
+
+Response:
+
+{
+  "answer": "model output",
+  "latency": "time in seconds"
+}
+Endpoint: /metrics
+
+Returns system performance and evaluation metrics
+
+5.7 Dashboard Module
+
+Features:
+
+Training progress
+
+Dataset size
+
+Evaluation metrics
+
+Latency tracking
+
+System logs
+
+6. 🏗️ TECH STACK
+Backend:
+
+FastAPI
+
+Python
+
+Machine Learning:
+
+HuggingFace Transformers
+
+PEFT (LoRA)
+
+Datasets
+
+Evaluate
+
+Inference:
+
+vLLM (preferred) or Transformers pipeline
+
+Infrastructure:
+
+GPU (A100 / L4 / T4)
+
+Docker
+
+Cloud or local server
+
+7. ⚡ PERFORMANCE REQUIREMENTS
+Accuracy Targets
+Metric	Target
+Accuracy	93–96%
+EM	~89%
+F1	~0.94
+Performance Targets
+Metric	Target
+Latency	0.6–1.0 sec
+Throughput	5–20 req/sec
+Language Quality
+Metric	Target
+BLEU	~0.85
+ROUGE-L	~0.90
+BERTScore	~0.96
+8. 🚨 NON-FUNCTIONAL REQUIREMENTS
+
+Performance: Real-time response (<1 second)
+
+Scalability: Handle concurrent requests
+
+Reliability: Fault tolerance and retries
+
+Security: API protection and rate limiting
+
+Monitoring: Logging and metrics tracking
+
+9. 🚀 DEPLOYMENT PLAN
+Phase 1: Local Development
+
+Dataset generation
+
+Model training
+
+Evaluation
+
+Phase 2: Single Server Deployment
+
+API + Model deployment on GPU server
+
+Phase 3: Production Optimization
+
+vLLM inference engine
+
+Containerization (Docker)
+
+Reverse proxy (Nginx)
+
+10. 🗂️ PROJECT STRUCTURE
+de-cot/
+│
+├── dataset/
+├── cot_generation/
+├── filtering/
+├── training/
+├── inference/
+├── api/
+├── metrics/
+├── frontend/
+└── models/
+11. ✅ SUCCESS CRITERIA
+
+Student model performs inference independently
+
+No teacher model usage during runtime
+
+Metrics computed and displayed correctly
+
+Latency meets target requirements
+
+Accuracy meets benchmark thresholds
+
+System is fully deployable and scalable
+
+12. 📌 FINAL OUTCOME
+
+A production-ready reasoning system that:
+
+Achieves high reasoning accuracy
+
+Operates with low latency
+
+Reduces dependency on large models
+
+Supports scalable deployment
+
+Aligns with research-grade evaluation standards
