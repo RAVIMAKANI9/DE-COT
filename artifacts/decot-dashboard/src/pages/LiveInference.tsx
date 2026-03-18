@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import {
   Bot, Send, Plus, Trash2, Zap, Brain, Search,
-  Calculator, CheckCircle, Lightbulb, Sparkles
+  Calculator, CheckCircle, Lightbulb
 } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
@@ -274,16 +274,33 @@ export default function LiveInference() {
             </div>
             <div>
               <h2 className="font-semibold text-sm text-slate-200">DE-COT Reasoning Agent</h2>
-              <p className="text-[10px] text-primary flex items-center gap-1">
-                <Sparkles className="h-2.5 w-2.5" /> GPT-4.1-nano · Chain-of-Thought
-              </p>
             </div>
           </div>
-          {latency !== null && (
-            <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary bg-primary/5 flex items-center gap-1">
-              <Zap className="h-3 w-3" /> {(latency / 1000).toFixed(2)}s
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {latency !== null && (
+              <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary bg-primary/5 flex items-center gap-1">
+                <Zap className="h-3 w-3" /> {(latency / 1000).toFixed(2)}s
+              </Badge>
+            )}
+            {displayTurns.length > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2.5 text-[11px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex items-center gap-1.5"
+                disabled={clearMutation.isPending || isStreaming}
+                onClick={() => clearMutation.mutate(
+                  { sessionId },
+                  { onSuccess: () => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/agent/history"] })
+                      handleNewSession()
+                    }
+                  }
+                )}
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Clear chat
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Messages */}
