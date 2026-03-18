@@ -135,13 +135,7 @@ GSM8K + CommonsenseQA + AQuA-RAT
     FastAPI inference (no explicit CoT at runtime)
 ```
 
-## Cost Estimates
 
-| Phase | Cost |
-|-------|------|
-| Phase 2 (CoT generation, gpt-4o-mini) | ~$30–80 |
-| Phase 4 (GPU training, Replit) | GPU hours |
-| **Total OpenAI spend** | **<$120** |
 
 ## Performance Targets
 
