@@ -224,9 +224,27 @@ export default function LiveInference() {
       <Card className="w-72 hidden lg:flex flex-col border-border/50 bg-card/40 backdrop-blur-md overflow-hidden">
         <div className="p-3 border-b border-border/50 flex items-center justify-between bg-black/20 shrink-0">
           <h3 className="text-sm font-semibold text-slate-200">Conversations</h3>
-          <Button size="icon" variant="ghost" className="h-7 w-7 hover:text-primary" onClick={handleNewSession}>
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {sessions.length > 0 && (
+              <Button
+                size="icon" variant="ghost"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                title="Delete all conversations"
+                disabled={clearMutation.isPending}
+                onClick={() => {
+                  fetch(`${BASE}/api/agent/history`, { method: "DELETE" }).then(() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/agent/history"] })
+                    handleNewSession()
+                  })
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button size="icon" variant="ghost" className="h-7 w-7 hover:text-primary" onClick={handleNewSession}>
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-1">
