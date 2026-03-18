@@ -67,9 +67,11 @@ Tables in PostgreSQL:
 - `GET /api/evaluation/training-curve` — loss curve
 - `POST /api/inference/query` — run inference question
 - `GET /api/inference/status` — inference service status
-- `POST /api/agent/ask` — CoT reasoning agent (auto-detects math/logic/commonsense/general)
+- `POST /api/agent/ask` — SSE streaming CoT reasoning agent (auto-detects math/logic/commonsense/general)
 - `GET /api/agent/history` — conversation history (filterable by sessionId)
 - `DELETE /api/agent/history/:sessionId` — clear a session
+- `GET /api/evaluation/quality` — language + accuracy quality metrics (EM, F1, nDCG, BLEU, ROUGE-L, METEOR, BERTScore) with spec targets
+- `GET /api/evaluation/performance` — live latency percentiles (avg, P50, P95) and throughput from conversation data
 
 Internal endpoints (called by Python scripts):
 - `POST /api/pipeline/internal/phase-update`
@@ -104,6 +106,15 @@ python pipeline/06_deploy.py
 1. **Overview** — phase cards, cost tracker, dataset counts
 2. **Pipeline Monitor** — detailed phase progress table with logs
 3. **Training Curves** — live Recharts loss plot (auto-refresh 30s)
-4. **Evaluation Results** — accuracy vs targets bar chart
-5. **Reasoning Agent** — full chat UI with CoT step-by-step reasoning (math/logic/commonsense/general), session history, confidence badges
+4. **Evaluation Results** — 4 tabs covering full DE-COT v1.0 spec metric suite:
+   - Benchmark Accuracy: GSM8K/CommonsenseQA/AQuA-RAT vs paper targets
+   - Accuracy Metrics: EM (~89%), F1 (~0.94), nDCG arc-progress gauges
+   - Language Quality: BLEU, ROUGE-L, METEOR, BERTScore radar chart
+   - System Performance: live P50/P95 latency bars, throughput targets
+5. **Reasoning Agent** — SSE streaming CoT chat (gpt-4.1-nano, tokens appear instantly), session history, confidence badges, latency badge
 6. **Cost Tracker** — OpenAI spend breakdown by phase
+
+## Performance Spec (DE-COT v1.0)
+- Latency target: 0.60–1.00s | Throughput: 5–20 req/s
+- Accuracy: 93–96% | EM: ~89% | F1: ~0.94
+- BLEU: ~0.85 | ROUGE-L: ~0.90 | BERTScore: ~0.96
