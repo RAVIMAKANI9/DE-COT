@@ -8,66 +8,47 @@ import crypto from "crypto";
 
 const router: IRouter = Router();
 
-// gpt-4.1-mini: more capable than nano, ~same latency at low token budgets
-const MODEL = "openai/gpt-4.1-mini";
+const MODEL = "openai/gpt-4.1-nano";
 
-// ─── Ultra-compact system prompts ────────────────────────────────────────────
+// ─── Ultra-minimal prompts ────────────────────────────────────────────────────
 
-const SYSTEM_PROMPTS: Record<string, string> = {
-  math:        `Math expert. Reason briefly then answer. Format:\nReason: <2-3 line working>\nFINAL ANSWER: <value>`,
-  commonsense: `Common-sense expert. Briefly justify then pick. Format:\nReason: <1-2 sentences>\nFINAL ANSWER: <choice>`,
-  logic:       `Logic expert. State key inference briefly. Format:\nReason: <1-2 sentences>\nFINAL ANSWER: <conclusion>`,
-  general:     `Expert assistant. Be concise and precise. Format:\nReason: <2-3 sentences>\nFINAL ANSWER: <answer>`,
+const SYS: Record<string, string> = {
+  math:        `Solve math concisely. Show 1-2 line working. End: FINAL ANSWER: <value>`,
+  commonsense: `Pick best option with 1-line justification. End: FINAL ANSWER: <choice>`,
+  logic:       `Apply logic briefly. End: FINAL ANSWER: <conclusion>`,
+  general:     `Answer precisely in 2-3 sentences. End: FINAL ANSWER: <answer>`,
 };
-
-const buildPrompt = (question: string, context: string) =>
-  `${context ? `Context:\n${context}\n\n` : ""}Q: ${question}`;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-type QuestionType = "math" | "commonsense" | "logic" | "general";
+type QType = "math" | "commonsense" | "logic" | "general";
 
-function detectType(q: string): QuestionType {
+function detectType(q: string): QType {
   const l = q.toLowerCase();
-  if (/\d[\+\-\*\/]\d|how many|calculat|percent|ratio|solve|find x|\$\d|km\/h|speed|distance|total|sum/.test(l)) return "math";
+  if (/\d[\+\-\*\/]\d|how many|calculat|percent|ratio|solve|find x|\$\d|km\/h|speed|distance|total/.test(l)) return "math";
   if (/if .* then|all .* are|some .* are|therefore|implies|conclude|deduce|premise/.test(l)) return "logic";
   if (/which of|most likely|best describes|\(a\)|\(b\)|\(c\)|choices?:|options?:|where would/.test(l)) return "commonsense";
   return "general";
 }
 
-interface ParsedStep { stepNumber: number; title: string; content: string; type: string }
+interface Step { stepNumber: number; title: string; content: string; type: string }
 
-function parse(raw: string): { steps: ParsedStep[]; answer: string } {
-  const answerMatch = raw.match(/FINAL ANSWER:\s*(.+?)(?:\n|$)/i);
-  const answer = answerMatch ? answerMatch[1].trim() : raw.split("\n").pop()?.trim() ?? raw.trim();
-
-  const reasonMatch = raw.match(/Reason:\s*([\s\S]+?)(?=FINAL ANSWER:|$)/i);
-  const steps: ParsedStep[] = reasonMatch ? [{
-    stepNumber: 1, title: "Reasoning", content: reasonMatch[1].trim(), type: "think"
-  }] : [];
-
+function parse(raw: string): { steps: Step[]; answer: string } {
+  const am = raw.match(/FINAL ANSWER:\s*(.+?)(?:\n|$)/i);
+  const answer = am ? am[1]!.trim() : raw.trim().split("\n").pop()?.trim() ?? raw.trim();
+  const rm = raw.match(/(?:Reason(?:ing)?:|^)([\s\S]+?)(?=FINAL ANSWER:|$)/i);
+  const steps: Step[] = rm ? [{ stepNumber: 1, title: "Reasoning", content: rm[1]!.trim(), type: "think" }] : [];
   return { steps, answer };
 }
 
-function confidence(raw: string): "high" | "medium" | "low" {
+function conf(raw: string): "high" | "medium" | "low" {
   const n = (raw.toLowerCase().match(/uncertain|not sure|might|possibly|unclear|perhaps|maybe/g) ?? []).length;
   return n === 0 ? "high" : n <= 1 ? "medium" : "low";
 }
 
-async function recentContext(sessionId: string): Promise<string> {
-  const rows = await db
-    .select({ question: conversationTable.question, answer: conversationTable.answer })
-    .from(conversationTable)
-    .where(eq(conversationTable.sessionId, sessionId))
-    .orderBy(desc(conversationTable.turnNumber))
-    .limit(1);
-  if (!rows.length) return "";
-  return `Prev Q: ${rows[0]!.question}\nPrev A: ${rows[0]!.answer}`;
-}
-
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-// POST /api/agent/ask  — SSE streaming
+// POST /api/agent/ask — SSE streaming, DB write is fire-and-forget
 router.post("/ask", async (req, res) => {
   const parsed = AgentAskBody.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid request" });
@@ -75,26 +56,25 @@ router.post("/ask", async (req, res) => {
   const { question, sessionId: sid, mode } = parsed.data;
   const sessionId = sid ?? crypto.randomUUID();
   const t0 = Date.now();
-  const qType: QuestionType = (mode && mode !== "auto") ? mode as QuestionType : detectType(question);
+  const qType: QType = (mode && mode !== "auto") ? mode as QType : detectType(question);
 
+  // SSE headers — flush immediately so browser starts reading
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
-  const ctx = await recentContext(sessionId);
-  const userPrompt = buildPrompt(question, ctx);
-
+  // Start LLM stream immediately — no DB pre-query to avoid latency
   let fullText = "";
   try {
     const stream = await openrouter.chat.completions.create({
       model: MODEL,
       messages: [
-        { role: "system", content: SYSTEM_PROMPTS[qType]! },
-        { role: "user",   content: userPrompt },
+        { role: "system", content: SYS[qType]! },
+        { role: "user",   content: `Q: ${question}` },
       ],
-      max_tokens: 350,
+      max_tokens: 200,
       temperature: 0.1,
       stream: true,
     });
@@ -114,27 +94,27 @@ router.post("/ask", async (req, res) => {
 
   const latencyMs = Date.now() - t0;
   const { steps, answer } = parse(fullText);
-  const conf = confidence(fullText);
+  const confidence = conf(fullText);
 
-  const [lastTurn] = await db
-    .select({ turnNumber: conversationTable.turnNumber })
+  // Send done event immediately — don't wait for DB
+  res.write(`data: ${JSON.stringify({
+    done: true, sessionId, question, answer, reasoning: steps,
+    questionType: qType, confidence, latencyMs, model: MODEL,
+  })}\n\n`);
+  res.end();
+
+  // DB write in background (fire and forget)
+  db.select({ turnNumber: conversationTable.turnNumber })
     .from(conversationTable)
     .where(eq(conversationTable.sessionId, sessionId))
     .orderBy(desc(conversationTable.turnNumber))
-    .limit(1);
-  const turnNumber = (lastTurn?.turnNumber ?? 0) + 1;
-
-  await db.insert(conversationTable).values({
-    sessionId, turnNumber, question, answer,
-    reasoning: steps, questionType: qType,
-    confidence: conf, latencyMs, model: MODEL,
-  });
-
-  res.write(`data: ${JSON.stringify({
-    done: true, sessionId, question, answer, reasoning: steps,
-    questionType: qType, confidence: conf, latencyMs, model: MODEL, turnNumber,
-  })}\n\n`);
-  res.end();
+    .limit(1)
+    .then(([last]) => db.insert(conversationTable).values({
+      sessionId, turnNumber: (last?.turnNumber ?? 0) + 1,
+      question, answer, reasoning: steps, questionType: qType,
+      confidence, latencyMs, model: MODEL,
+    }))
+    .catch(console.error);
 });
 
 // GET /api/agent/history
@@ -149,20 +129,20 @@ router.get("/history", async (req, res) => {
   return res.json(GetAgentHistoryResponse.parse(rows.map(r => ({
     id: r.id, sessionId: r.sessionId, turnNumber: r.turnNumber,
     question: r.question, answer: r.answer,
-    reasoning: (r.reasoning ?? []) as Array<{ stepNumber: number; title: string; content: string; type: string }>,
+    reasoning: (r.reasoning ?? []) as Step[],
     questionType: r.questionType, confidence: r.confidence,
     latencyMs: r.latencyMs, model: r.model,
     createdAt: r.createdAt?.toISOString() ?? new Date().toISOString(),
   }))));
 });
 
-// DELETE /api/agent/history/:sessionId  — clear one session
+// DELETE /api/agent/history/:sessionId
 router.delete("/history/:sessionId", async (req, res) => {
   await db.delete(conversationTable).where(eq(conversationTable.sessionId, req.params.sessionId));
   return res.json(ClearAgentHistoryResponse.parse({ cleared: true, sessionId: req.params.sessionId }));
 });
 
-// DELETE /api/agent/history  — clear ALL conversations
+// DELETE /api/agent/history — clear ALL
 router.delete("/history", async (_req, res) => {
   await db.delete(conversationTable);
   return res.json({ cleared: true, sessionId: "all" });
