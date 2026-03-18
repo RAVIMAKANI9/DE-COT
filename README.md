@@ -2,8 +2,6 @@
 
 ### Data-Efficient Chain-of-Thought Distillation for Reasoning in Small Language Models
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)]()
-[![DOI](https://zenodo.org/badge/XXXX.svg)](https://doi.org/10.5281/zenodo.xxxxxx)
 
 ---
 
