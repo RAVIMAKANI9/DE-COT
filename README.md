@@ -2,7 +2,9 @@
 
 ### Data-Efficient Chain-of-Thought Distillation for Reasoning in Small Language Models
 
----
+[![DOI](https://zenodo.org/badge/1185174063.svg)](https://doi.org/10.5281/zenodo.19131477)
+
+
 
 ## 📄 Research Paper
 
@@ -196,6 +198,12 @@ Final average latency: **~0.69 seconds**
 
 ---
 
+## 👨‍💻 Author
+
+**Ravi Makani**
+
+---
+
 ## 📄 License
 
 Apache License 2.0
@@ -205,3 +213,7 @@ Apache License 2.0
 ## ⭐ Support
 
 If you find this project useful, consider giving it a ⭐ on GitHub.
+
+---
+
+[![DOI](https://zenodo.org/badge/1185174063.svg)](https://doi.org/10.5281/zenodo.19131477)
