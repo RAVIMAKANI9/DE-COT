@@ -1,4 +1,4 @@
-# 🚀 DE-COT Pipeline Dashboard
+# 🚀 DE-COT 
 
 ### Data-Efficient Chain-of-Thought Distillation for Reasoning in Small Language Models
 
