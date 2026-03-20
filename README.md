@@ -202,12 +202,6 @@ Apache License 2.0
 
 ---
 
-## 👨‍💻 Author
-
-**Ravi Makani**
-
----
-
 ## ⭐ Support
 
 If you find this project useful, consider giving it a ⭐ on GitHub.
