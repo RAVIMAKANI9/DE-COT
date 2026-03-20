@@ -10,6 +10,8 @@
 
 **Enhancing Reasoning in Small Language Models through Data Efficient Chain of Thought Distillation**
 
+This repository is directly associated with the manuscript submitted to *Applied Intelligence* and enables full experimental reproducibility.
+
 This repository provides the **official implementation** of the DE-COT (Data-Efficient Chain-of-Thought Distillation) framework.
 
 ---
@@ -106,8 +108,8 @@ The DE-COT framework includes:
 
 ## 📂 Project Structure
 
-DE-COT/
-│
+
+DE-COT/                      
 ├── pipeline/                # Core machine learning pipeline  
 ├── artifacts/               # Dashboard and API components  
 ├── lib/                     # Backend utilities and integrations  
@@ -121,17 +123,21 @@ DE-COT/
 
 ### Install Dependencies
 
+```bash
 pip install -r requirements.txt
+```
 
 ### Run Full Pipeline
 
-python pipeline/00_setup.py  
-python pipeline/01_download.py  
-python pipeline/02_generate_cot.py  
-python pipeline/03_filter_cot.py  
-python pipeline/04_finetune.py  
-python pipeline/05_evaluate.py  
-python pipeline/06_deploy.py  
+```bash
+python pipeline/00_setup.py
+python pipeline/01_download.py
+python pipeline/02_generate_cot.py
+python pipeline/03_filter_cot.py
+python pipeline/04_finetune.py
+python pipeline/05_evaluate.py
+python pipeline/06_deploy.py
+```
 
 👉 All stages are **checkpoint-enabled and resumable**
 
@@ -141,7 +147,9 @@ python pipeline/06_deploy.py
 
 Start the server:
 
+```bash
 python pipeline/06_deploy.py
+```
 
 ### Endpoint
 
@@ -149,9 +157,11 @@ POST /infer
 
 ### Example Request
 
+```json
 {
   "question": "Solve a reasoning problem..."
 }
+```
 
 ---
 
@@ -195,6 +205,57 @@ Final average latency: **~0.69 seconds**
 - **ML Frameworks:** PyTorch, Hugging Face Transformers  
 - **Fine-Tuning:** LoRA / QLoRA  
 - **Models:** GPT-based teacher, LLaMA-2 student  
+
+---
+
+## 🔁 Reproducibility and Open-Source Availability
+
+This repository follows reproducible research best practices aligned with Springer and Applied Intelligence publication standards.
+
+To ensure full transparency and reproducibility of the proposed DE-COT framework, the complete implementation is publicly available with comprehensive documentation and usage guidelines.
+
+The repository includes all necessary components required to replicate the experiments and evaluate the results:
+
+- Environment setup and dependencies  
+- Dataset preprocessing and preparation scripts  
+- Chain-of-Thought (CoT) generation pipeline  
+- Reasoning trajectory filtering and dataset construction  
+- Model training and fine-tuning configurations (LoRA / QLoRA)  
+- Evaluation scripts and benchmarking workflows  
+- Deployment-ready inference pipeline  
+
+📌 **GitHub Repository:** *https://github.com/RAVIMAKANI9/DE-COT*  
+
+📌 **Permanent Archive (DOI):**  
+https://doi.org/10.5281/zenodo.19131477  
+
+All benchmark datasets used (GSM8K, CommonsenseQA, and AQuA) are publicly available under their respective licenses and are referenced within the repository.
+
+A permanent version of the code and associated research artifacts is archived on Zenodo with an assigned DOI to ensure long-term accessibility, reproducibility, and citation within the scientific community.
+
+---
+
+## 📌 Relation to Manuscript
+
+This repository contains the official implementation corresponding to the manuscript:
+
+**"Enhancing Reasoning in Small Language Models through Data Efficient Chain of Thought Distillation"**
+
+All code, experiments, and results provided in this repository are directly associated with the methods and evaluations described in the manuscript.
+This implementation enables full reproducibility of all experimental results reported in the manuscript.
+
+---
+
+## ⭐ Citation
+
+If you use this repository, dataset, or framework in your research, please cite the following work:
+
+
+```
+Makani, R., et al. (2026).
+DE-COT: Data-Efficient Chain-of-Thought Distillation Framework.
+https://doi.org/10.5281/zenodo.19131477
+```
 
 ---
 
