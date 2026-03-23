@@ -246,24 +246,6 @@ This implementation enables full reproducibility of all experimental results rep
 
 ---
 
-## ⭐ Citation
-
-If you use this repository, dataset, or framework in your research, please cite the following work:
-
-
-```
-Makani, R., et al. (2026).
-DE-COT: Data-Efficient Chain-of-Thought Distillation Framework.
-https://doi.org/10.5281/zenodo.19131477
-```
-
----
-
-## 👨‍💻 Author
-
-**Ravi Makani**
-
----
 
 ## 📄 License
 
