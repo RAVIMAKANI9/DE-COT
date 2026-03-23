@@ -1,0 +1,8 @@
+{
+  "phase0_completed": true,
+  "phase0_errors": [
+    "OPENAI_API_KEY missing"
+  ],
+  "setup_time": "2026-03-20T11:12:17.066928",
+  "updated_at": "2026-03-20T11:12:17.067590"
+}

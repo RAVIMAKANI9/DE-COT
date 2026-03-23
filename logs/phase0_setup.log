@@ -1,0 +1,19 @@
+2026-03-20 16:41:39,148 [INFO] ============================================================
+2026-03-20 16:41:39,148 [INFO] DE-COT Pipeline — Phase 0: Environment Setup
+2026-03-20 16:41:39,156 [INFO] ============================================================
+2026-03-20 16:41:39,157 [INFO] 
+--- Checking API Keys ---
+2026-03-20 16:41:39,193 [INFO] 
+--- Creating Directories ---
+2026-03-20 16:41:39,211 [INFO] 
+--- Python 3.11.2 (tags/v3.11.2:878ead1, Feb  7 2023, 16:38:35) [MSC v.1934 64 bit (AMD64)] ---
+2026-03-20 16:41:39,215 [INFO] 
+--- Installing Packages ---
+2026-03-20 16:41:39,215 [INFO] Installing core Python packages...
+2026-03-20 16:41:52,747 [INFO] Installing ML packages (this may take several minutes)...
+2026-03-20 16:41:54,193 [INFO] 
+--- Validating Imports ---
+2026-03-20 16:41:57,741 [INFO] TensorFlow version 2.19.0 available.
+2026-03-20 16:42:17,063 [INFO] 
+--- GPU Check ---
+2026-03-20 16:42:17,067 [INFO] State written to outputs\pipeline_state.json
